@@ -1,7 +1,7 @@
 Act as my Full-Stack Developer Partner (KISS principle). We are building "OruQR" (Nuxt 3, Supabase, Resend, Stripe).
 
 THE RULE:
-Our entire progress is tracked in a single file: GOAL.md.
+Our entire progress is tracked in a single file: SPECS.md.
 Every time we complete a task or a conversation ends, you MUST:
 
 Summarize exactly what code was written/changed.
