@@ -19,11 +19,11 @@ Database Setup & Core QR Code Functionality
 - [x] Configure authentication middleware
 
 ### 🔄 Phase 2: Database & Supabase Setup (IN PROGRESS)
-- [ ] Create Supabase project (or connect to existing)
-- [ ] Run database schema SQL (profiles, qr_codes, scans tables)
-- [ ] Set up Row Level Security (RLS) policies
-- [ ] Configure Supabase Storage bucket for QR code images
-- [ ] Test Supabase connection in the app
+- [x] Create Supabase project (or connect to existing)
+- [x] Run database schema SQL (profiles, qr_codes, scans tables)
+- [x] Set up Row Level Security (RLS) policies
+- [ ] Configure Supabase Storage bucket for QR code images (Manual Step Required in Dashboard)
+- [x] Test Supabase connection in the app (Verified Database Connection)
 
 ### 📋 Phase 3: QR Code Management (NEXT)
 - [ ] Create API route: POST /api/qr-codes (create QR code)
@@ -57,43 +57,25 @@ Database Setup & Core QR Code Functionality
 - [ ] Add subscription notification emails
 - [ ] Build limit warning emails
 
-## Code Summary (Session 1)
+## Code Summary (Session 2)
 
 ### Files Created:
-1. **package.json** - Project dependencies and scripts
-2. **nuxt.config.ts** - Nuxt configuration with Supabase and Tailwind modules
-3. **tsconfig.json** - TypeScript configuration
-4. **.gitignore** - Git ignore rules
-5. **assets/css/main.css** - Tailwind CSS with custom theme variables
-6. **app.vue** - Main application entry point
-7. **pages/index.vue** - Landing page with hero, features, and navigation
-8. **pages/login.vue** - Login page with Supabase authentication
-9. **pages/register.vue** - Registration page with email verification
-10. **pages/dashboard/index.vue** - Dashboard with stats, sidebar, and quick actions
-11. **middleware/auth.global.ts** - Authentication middleware for route protection
-12. **README.md** - Project documentation and setup instructions
+1. **.env** - Created local env file for development (not committed)
+2. **scripts/migrate.js** - Temporary migration script (deleted)
 
-### Dependencies Installed:
-- Nuxt 3 (v3.15.1)
-- @nuxtjs/supabase (v1.4.0)
-- @nuxtjs/tailwindcss (v6.12.2)
-- Stripe (v17.5.0) & @stripe/stripe-js (v4.10.0)
-- Resend (v4.0.1)
-- qrcode (v1.5.4)
-- ua-parser-js (v2.0.1)
-- TypeScript (v5.7.3)
+### Changes:
+- Ran database migration to create schema for `profiles`, `qr_codes`, `scans`, and `subscription_usage`.
+- Verified database connectivity and table creation.
 
 ## Next Immediate Step
 
-**Set up Supabase database:**
-1. Create a Supabase project at https://supabase.com
-2. Copy the project URL and anon key to `.env` file
-3. Run the database schema SQL from SPECS.md in Supabase SQL Editor
-4. Configure RLS policies for security
-5. Test the connection by running the dev server
+**Configure Supabase Storage & Start QR Code API:**
+1. Manually create 'qr-codes' public bucket in Supabase Dashboard.
+2. Begin implementing `POST /api/qr-codes` endpoint in `server/api/qr-codes/index.post.ts`.
+3. Implement `GET /api/qr-codes` endpoint in `server/api/qr-codes/index.get.ts`.
 
 ## Tech Debt/Bugs
-None (New Project)
+- Need to manually configure Supabase Storage bucket as it cannot be done via SQL/API easily without service key.
 
 ## Last Updated
-2026-01-13 00:43:40 IST
+2026-01-13 01:00:00 IST
