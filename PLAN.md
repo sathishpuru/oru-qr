@@ -20,6 +20,7 @@ Database Setup & Core QR Code Functionality
 
 ### 🔄 Phase 2: Database & Supabase Setup (IN PROGRESS)
 - [ ] Create Supabase project (or connect to existing)
+- [x] Create database setup scripts (test connection, apply schema)
 - [ ] Run database schema SQL (profiles, qr_codes, scans tables)
 - [ ] Set up Row Level Security (RLS) policies
 - [ ] Configure Supabase Storage bucket for QR code images
@@ -57,43 +58,30 @@ Database Setup & Core QR Code Functionality
 - [ ] Add subscription notification emails
 - [ ] Build limit warning emails
 
-## Code Summary (Session 1)
+## Code Summary (Session 2)
 
-### Files Created:
-1. **package.json** - Project dependencies and scripts
-2. **nuxt.config.ts** - Nuxt configuration with Supabase and Tailwind modules
-3. **tsconfig.json** - TypeScript configuration
-4. **.gitignore** - Git ignore rules
-5. **assets/css/main.css** - Tailwind CSS with custom theme variables
-6. **app.vue** - Main application entry point
-7. **pages/index.vue** - Landing page with hero, features, and navigation
-8. **pages/login.vue** - Login page with Supabase authentication
-9. **pages/register.vue** - Registration page with email verification
-10. **pages/dashboard/index.vue** - Dashboard with stats, sidebar, and quick actions
-11. **middleware/auth.global.ts** - Authentication middleware for route protection
-12. **README.md** - Project documentation and setup instructions
+### Files Created/Modified:
+1. **scripts/test-connection.ts** - Script to verify database connection
+2. **scripts/apply-schema.ts** - Script to apply Supabase schema to database
+3. **.env** - Environment variables file (created from sample)
+4. **.env.sample** - Updated with DATABASE_URL
+5. **package.json** - Added dev dependencies for DB scripts
 
 ### Dependencies Installed:
-- Nuxt 3 (v3.15.1)
-- @nuxtjs/supabase (v1.4.0)
-- @nuxtjs/tailwindcss (v6.12.2)
-- Stripe (v17.5.0) & @stripe/stripe-js (v4.10.0)
-- Resend (v4.0.1)
-- qrcode (v1.5.4)
-- ua-parser-js (v2.0.1)
-- TypeScript (v5.7.3)
+- tsx
+- pg, @types/pg
+- dotenv
 
 ## Next Immediate Step
 
-**Set up Supabase database:**
-1. Create a Supabase project at https://supabase.com
-2. Copy the project URL and anon key to `.env` file
-3. Run the database schema SQL from SPECS.md in Supabase SQL Editor
-4. Configure RLS policies for security
-5. Test the connection by running the dev server
+**Finalize Database Setup:**
+1. Fill in `.env` with actual Supabase credentials (SUPABASE_URL, SUPABASE_KEY, DATABASE_URL).
+2. Run `npx tsx scripts/test-connection.ts` to verify connection.
+3. Run `npx tsx scripts/apply-schema.ts` to apply the database schema.
+4. Manually create 'qr-codes' bucket in Supabase Storage.
 
 ## Tech Debt/Bugs
 None (New Project)
 
 ## Last Updated
-2026-01-13 00:43:40 IST
+2026-01-15 22:50:00 UTC
