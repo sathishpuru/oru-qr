@@ -25,14 +25,17 @@ CREATE TABLE IF NOT EXISTS profiles (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" 
   ON profiles FOR SELECT 
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" 
   ON profiles FOR UPDATE 
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" 
   ON profiles FOR INSERT 
   WITH CHECK (auth.uid() = id);
@@ -74,23 +77,28 @@ CREATE INDEX IF NOT EXISTS idx_qr_codes_created_at ON qr_codes(created_at DESC);
 ALTER TABLE qr_codes ENABLE ROW LEVEL SECURITY;
 
 -- QR Codes policies
+DROP POLICY IF EXISTS "Users can view own QR codes" ON qr_codes;
 CREATE POLICY "Users can view own QR codes" 
   ON qr_codes FOR SELECT 
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own QR codes" ON qr_codes;
 CREATE POLICY "Users can insert own QR codes" 
   ON qr_codes FOR INSERT 
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own QR codes" ON qr_codes;
 CREATE POLICY "Users can update own QR codes" 
   ON qr_codes FOR UPDATE 
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own QR codes" ON qr_codes;
 CREATE POLICY "Users can delete own QR codes" 
   ON qr_codes FOR DELETE 
   USING (auth.uid() = user_id);
 
 -- Public read for redirect (anyone can read to redirect)
+DROP POLICY IF EXISTS "Anyone can read QR codes for redirect" ON qr_codes;
 CREATE POLICY "Anyone can read QR codes for redirect" 
   ON qr_codes FOR SELECT 
   USING (true);
@@ -132,6 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_scans_device_type ON scans(device_type);
 ALTER TABLE scans ENABLE ROW LEVEL SECURITY;
 
 -- Scans policies
+DROP POLICY IF EXISTS "Users can view scans for their QR codes" ON scans;
 CREATE POLICY "Users can view scans for their QR codes" 
   ON scans FOR SELECT 
   USING (
@@ -142,6 +151,7 @@ CREATE POLICY "Users can view scans for their QR codes"
     )
   );
 
+DROP POLICY IF EXISTS "Anyone can insert scans" ON scans;
 CREATE POLICY "Anyone can insert scans" 
   ON scans FOR INSERT 
   WITH CHECK (true);
@@ -167,6 +177,7 @@ CREATE INDEX IF NOT EXISTS idx_subscription_usage_period ON subscription_usage(p
 ALTER TABLE subscription_usage ENABLE ROW LEVEL SECURITY;
 
 -- Subscription usage policies
+DROP POLICY IF EXISTS "Users can view own usage" ON subscription_usage;
 CREATE POLICY "Users can view own usage" 
   ON subscription_usage FOR SELECT 
   USING (auth.uid() = user_id);
@@ -227,27 +238,24 @@ CREATE TRIGGER update_qr_codes_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- STORAGE BUCKET (Run in Supabase Dashboard > Storage)
+-- STORAGE BUCKET
 -- ============================================
--- Create a bucket for QR code images
--- You'll need to do this manually in the Supabase Dashboard:
--- 1. Go to Storage
--- 2. Create a new bucket named 'qr-codes'
--- 3. Set it to Public
--- 4. Add policy to allow authenticated users to upload
+-- Attempt to create bucket via SQL. This requires permissions on storage schema.
 
--- Storage policies (run after creating bucket):
--- INSERT INTO storage.buckets (id, name, public) VALUES ('qr-codes', 'qr-codes', true);
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('qr-codes', 'qr-codes', true)
+ON CONFLICT (id) DO NOTHING;
 
--- Allow authenticated users to upload
--- CREATE POLICY "Authenticated users can upload QR codes"
---   ON storage.objects FOR INSERT
---   WITH CHECK (bucket_id = 'qr-codes' AND auth.role() = 'authenticated');
+-- Policies for storage
+DROP POLICY IF EXISTS "Authenticated users can upload QR codes" ON storage.objects;
+CREATE POLICY "Authenticated users can upload QR codes"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'qr-codes' AND auth.role() = 'authenticated');
 
--- Allow public read access
--- CREATE POLICY "Public can view QR codes"
---   ON storage.objects FOR SELECT
---   USING (bucket_id = 'qr-codes');
+DROP POLICY IF EXISTS "Public can view QR codes" ON storage.objects;
+CREATE POLICY "Public can view QR codes"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'qr-codes');
 
 -- ============================================
 -- SAMPLE DATA (Optional - for testing)
