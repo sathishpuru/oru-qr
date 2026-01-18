@@ -1,5 +1,5 @@
 -- OruQR Database Schema for Supabase
--- Run this in your Supabase SQL Editor
+-- Run this in your Supabase SQL Editor or using scripts/apply-schema.ts
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -24,18 +24,22 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Enable Row Level Security
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
-CREATE POLICY "Users can view own profile" 
-  ON profiles FOR SELECT 
-  USING (auth.uid() = id);
+-- Profiles policies (Idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can view own profile') THEN
+    CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+  END IF;
 
-CREATE POLICY "Users can update own profile" 
-  ON profiles FOR UPDATE 
-  USING (auth.uid() = id);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can update own profile') THEN
+    CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+  END IF;
 
-CREATE POLICY "Users can insert own profile" 
-  ON profiles FOR INSERT 
-  WITH CHECK (auth.uid() = id);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can insert own profile') THEN
+    CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+  END IF;
+END $$;
+
 
 -- ============================================
 -- QR CODES TABLE
@@ -73,27 +77,30 @@ CREATE INDEX IF NOT EXISTS idx_qr_codes_created_at ON qr_codes(created_at DESC);
 -- Enable Row Level Security
 ALTER TABLE qr_codes ENABLE ROW LEVEL SECURITY;
 
--- QR Codes policies
-CREATE POLICY "Users can view own QR codes" 
-  ON qr_codes FOR SELECT 
-  USING (auth.uid() = user_id);
+-- QR Codes policies (Idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'qr_codes' AND policyname = 'Users can view own QR codes') THEN
+    CREATE POLICY "Users can view own QR codes" ON qr_codes FOR SELECT USING (auth.uid() = user_id);
+  END IF;
 
-CREATE POLICY "Users can insert own QR codes" 
-  ON qr_codes FOR INSERT 
-  WITH CHECK (auth.uid() = user_id);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'qr_codes' AND policyname = 'Users can insert own QR codes') THEN
+    CREATE POLICY "Users can insert own QR codes" ON qr_codes FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
 
-CREATE POLICY "Users can update own QR codes" 
-  ON qr_codes FOR UPDATE 
-  USING (auth.uid() = user_id);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'qr_codes' AND policyname = 'Users can update own QR codes') THEN
+    CREATE POLICY "Users can update own QR codes" ON qr_codes FOR UPDATE USING (auth.uid() = user_id);
+  END IF;
 
-CREATE POLICY "Users can delete own QR codes" 
-  ON qr_codes FOR DELETE 
-  USING (auth.uid() = user_id);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'qr_codes' AND policyname = 'Users can delete own QR codes') THEN
+    CREATE POLICY "Users can delete own QR codes" ON qr_codes FOR DELETE USING (auth.uid() = user_id);
+  END IF;
 
--- Public read for redirect (anyone can read to redirect)
-CREATE POLICY "Anyone can read QR codes for redirect" 
-  ON qr_codes FOR SELECT 
-  USING (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'qr_codes' AND policyname = 'Anyone can read QR codes for redirect') THEN
+    CREATE POLICY "Anyone can read QR codes for redirect" ON qr_codes FOR SELECT USING (true);
+  END IF;
+END $$;
+
 
 -- ============================================
 -- SCANS TABLE
@@ -131,20 +138,24 @@ CREATE INDEX IF NOT EXISTS idx_scans_device_type ON scans(device_type);
 -- Enable Row Level Security
 ALTER TABLE scans ENABLE ROW LEVEL SECURITY;
 
--- Scans policies
-CREATE POLICY "Users can view scans for their QR codes" 
-  ON scans FOR SELECT 
-  USING (
-    EXISTS (
-      SELECT 1 FROM qr_codes 
-      WHERE qr_codes.id = scans.qr_code_id 
-      AND qr_codes.user_id = auth.uid()
-    )
-  );
+-- Scans policies (Idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'scans' AND policyname = 'Users can view scans for their QR codes') THEN
+    CREATE POLICY "Users can view scans for their QR codes" ON scans FOR SELECT USING (
+      EXISTS (
+        SELECT 1 FROM qr_codes
+        WHERE qr_codes.id = scans.qr_code_id
+        AND qr_codes.user_id = auth.uid()
+      )
+    );
+  END IF;
 
-CREATE POLICY "Anyone can insert scans" 
-  ON scans FOR INSERT 
-  WITH CHECK (true);
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'scans' AND policyname = 'Anyone can insert scans') THEN
+    CREATE POLICY "Anyone can insert scans" ON scans FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
 
 -- ============================================
 -- SUBSCRIPTION USAGE TABLE
@@ -166,10 +177,14 @@ CREATE INDEX IF NOT EXISTS idx_subscription_usage_period ON subscription_usage(p
 -- Enable Row Level Security
 ALTER TABLE subscription_usage ENABLE ROW LEVEL SECURITY;
 
--- Subscription usage policies
-CREATE POLICY "Users can view own usage" 
-  ON subscription_usage FOR SELECT 
-  USING (auth.uid() = user_id);
+-- Subscription usage policies (Idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'subscription_usage' AND policyname = 'Users can view own usage') THEN
+    CREATE POLICY "Users can view own usage" ON subscription_usage FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+END $$;
+
 
 -- ============================================
 -- FUNCTIONS
@@ -227,40 +242,21 @@ CREATE TRIGGER update_qr_codes_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- STORAGE BUCKET (Run in Supabase Dashboard > Storage)
+-- STORAGE BUCKET
 -- ============================================
--- Create a bucket for QR code images
--- You'll need to do this manually in the Supabase Dashboard:
--- 1. Go to Storage
--- 2. Create a new bucket named 'qr-codes'
--- 3. Set it to Public
--- 4. Add policy to allow authenticated users to upload
+-- Provision 'qr-codes' bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('qr-codes', 'qr-codes', true)
+ON CONFLICT (id) DO NOTHING;
 
--- Storage policies (run after creating bucket):
--- INSERT INTO storage.buckets (id, name, public) VALUES ('qr-codes', 'qr-codes', true);
+-- Storage policies (Idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'Authenticated users can upload QR codes') THEN
+    CREATE POLICY "Authenticated users can upload QR codes" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'qr-codes' AND auth.role() = 'authenticated');
+  END IF;
 
--- Allow authenticated users to upload
--- CREATE POLICY "Authenticated users can upload QR codes"
---   ON storage.objects FOR INSERT
---   WITH CHECK (bucket_id = 'qr-codes' AND auth.role() = 'authenticated');
-
--- Allow public read access
--- CREATE POLICY "Public can view QR codes"
---   ON storage.objects FOR SELECT
---   USING (bucket_id = 'qr-codes');
-
--- ============================================
--- SAMPLE DATA (Optional - for testing)
--- ============================================
--- Uncomment to insert sample data after creating a user
-
--- INSERT INTO qr_codes (user_id, short_code, name, destination_url, description)
--- VALUES (
---   'YOUR_USER_ID_HERE',
---   'abc123',
---   'Sample QR Code',
---   'https://example.com',
---   'This is a sample QR code for testing'
--- );
-
-COMMIT;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND policyname = 'Public can view QR codes') THEN
+    CREATE POLICY "Public can view QR codes" ON storage.objects FOR SELECT USING (bucket_id = 'qr-codes');
+  END IF;
+END $$;
