@@ -14,7 +14,9 @@ export default defineNuxtConfig({
             login: '/login',
             callback: '/confirm',
             exclude: ['/', '/pricing', '/features', '/q/*']
-        }
+        },
+        url: process.env.SUPABASE_URL || 'https://example.supabase.co',
+        key: process.env.SUPABASE_KEY || 'your-anon-key'
     },
 
     runtimeConfig: {
